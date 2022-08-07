@@ -19,9 +19,8 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 # import from location
 build_spdlog = module_from_file("cmake", here / "setup_ext" / "build_spdlog.py")
-
-# collect, build & install dll
-# TODO
+SRC_DIR = here / "src" / "buildsys"
+BUILD_DIR = here / "workdir" / "build"
 
 # current packages
 packages = [
@@ -29,6 +28,7 @@ packages = [
 ]
 
 setup(
+    # attr
     name="dep_spdlog",
     version="0.0.0",
     description="pip install dependency: spdlog",
@@ -43,4 +43,9 @@ setup(
     package_dir={"": "src"},
     packages=packages,
     # cmdclass
+    cmdclass={
+        "build_clib": build_spdlog.construct_cmdclass_build_clib(SRC_DIR, BUILD_DIR),
+        "build": build_spdlog.construct_cmdclass_build(),
+        "develop": build_spdlog.construct_cmdclass_develop(),
+    },
 )
