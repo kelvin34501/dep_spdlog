@@ -168,3 +168,8 @@ cython_debug/
 
 # for pipenv
 Pipfile.lock
+
+# for install package data
+/src/dep_spdlog/src
+/src/dep_spdlog/include
+/src/dep_spdlog/lib64
