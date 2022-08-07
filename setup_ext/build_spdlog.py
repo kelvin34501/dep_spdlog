@@ -1,7 +1,6 @@
 import os
-import re
+import shutil
 import subprocess
-import sys
 import setuptools
 from setuptools.command.build_clib import build_clib
 from distutils.command.build import build
@@ -104,18 +103,22 @@ def construct_spdlog_linkback(build_dir, install_dir, package_dir):
     def spdlog_linkback():
         # * spdlog specific
         # link the src, include, lib path
-        spdlog_src_dir = os.path.join(build_dir, "spdlog-prefix", "src")
+        spdlog_src_dir = os.path.join(build_dir, "spdlog-prefix", "src", "spdlog")
         spdlog_include_dir = os.path.join(install_dir, "include")
         spdlog_lib64_dir = os.path.join(install_dir, "lib64")
         package_src_dir = os.path.join(package_dir, "src")
         package_include_dir = os.path.join(package_dir, "include")
         package_lib64_dir = os.path.join(package_dir, "lib64")
         # symlink
-        if not os.path.exists(package_src_dir):
-            os.symlink(spdlog_src_dir, package_src_dir)
-        if not os.path.exists(package_include_dir):
-            os.symlink(spdlog_include_dir, package_include_dir)
-        if not os.path.exists(package_lib64_dir):
-            os.symlink(spdlog_lib64_dir, package_lib64_dir)
+        if os.path.exists(package_src_dir):
+            shutil.rmtree(package_src_dir)
+        shutil.copytree(spdlog_src_dir, package_src_dir)
+        if os.path.exists(package_include_dir):
+            shutil.rmtree(package_include_dir)
+        shutil.copytree(spdlog_include_dir, package_include_dir)
+        if os.path.exists(package_lib64_dir):
+            shutil.rmtree(package_lib64_dir)
+        shutil.copytree(spdlog_lib64_dir, package_lib64_dir, symlinks=True)
+        shutil.rmtree(os.path.join(package_lib64_dir, "pkgconfig"))
 
     return spdlog_linkback
