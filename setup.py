@@ -21,6 +21,8 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 build_spdlog = module_from_file("cmake", here / "setup_ext" / "build_spdlog.py")
 SRC_DIR = here / "src" / "buildsys"
 BUILD_DIR = here / "workdir" / "build"
+INSTALL_DIR = here / "workdir" / "install"
+PACKAGE_DIR = here / "src" / "dep_spdlog"
 
 # current packages
 packages = [
@@ -44,7 +46,12 @@ setup(
     packages=packages,
     # cmdclass
     cmdclass={
-        "build_clib": build_spdlog.construct_cmdclass_build_clib(SRC_DIR, BUILD_DIR),
+        "build_clib": build_spdlog.construct_cmdclass_build_clib(
+            SRC_DIR,
+            BUILD_DIR,
+            INSTALL_DIR,
+            linkback_hook=build_spdlog.construct_spdlog_linkback(BUILD_DIR, INSTALL_DIR, PACKAGE_DIR),
+        ),
         "build": build_spdlog.construct_cmdclass_build(),
         "develop": build_spdlog.construct_cmdclass_develop(),
     },
