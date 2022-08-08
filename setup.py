@@ -1,6 +1,8 @@
+import os
 from setuptools import setup
 import pathlib
 import importlib.util
+from glob import glob
 
 
 # setup util function
@@ -24,10 +26,37 @@ BUILD_DIR = here / "workdir" / "build"
 INSTALL_DIR = here / "workdir" / "install"
 PACKAGE_DIR = here / "src" / "dep_spdlog"
 
+# create dir
+BUILD_DIR.mkdir(parents=True, exist_ok=True)
+INSTALL_DIR.mkdir(parents=True, exist_ok=True)
+build_spdlog.upkeep_library(
+    SRC_DIR,
+    BUILD_DIR,
+    INSTALL_DIR,
+    linkback_hook=build_spdlog.construct_spdlog_linkback(BUILD_DIR, INSTALL_DIR, PACKAGE_DIR),
+)
+
 # current packages
 packages = [
     "dep_spdlog",
 ]
+
+
+def get_package_file():
+    include_list = [
+        os.path.relpath(file, str(PACKAGE_DIR))
+        for file in glob(str(PACKAGE_DIR / "include" / "**" / "*"), recursive=True)
+    ]
+    lib64_list = [
+        os.path.relpath(file, str(PACKAGE_DIR))
+        for file in glob(str(PACKAGE_DIR / "lib64" / "**" / "*"), recursive=True)
+    ]
+    src_list = [
+        os.path.relpath(file, str(PACKAGE_DIR)) for file in glob(str(PACKAGE_DIR / "src" / "**" / "*"), recursive=True)
+    ]
+    res = include_list + lib64_list + src_list
+    return res
+
 
 setup(
     # attr
@@ -44,15 +73,12 @@ setup(
     # pkg
     package_dir={"": "src"},
     packages=packages,
+    package_data={"dep_spdlog": get_package_file()},
     # cmdclass
     cmdclass={
-        "build_clib": build_spdlog.construct_cmdclass_build_clib(
-            SRC_DIR,
-            BUILD_DIR,
-            INSTALL_DIR,
-            linkback_hook=build_spdlog.construct_spdlog_linkback(BUILD_DIR, INSTALL_DIR, PACKAGE_DIR),
-        ),
-        "build": build_spdlog.construct_cmdclass_build(),
-        "develop": build_spdlog.construct_cmdclass_develop(),
+        "build_clib": build_spdlog.construct_cmdclass_build_clib(),
+        "build_ext": build_spdlog.construct_cmdclass_build_ext(),
     },
+    libraries=[("dummy", {"sources": []})],
+    ext_modules=[build_spdlog.DummyExtension("dummy", [])],
 )
