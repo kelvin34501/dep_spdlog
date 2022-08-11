@@ -1,0 +1,4 @@
+global-exclude *.py[cod]
+graft src/buildsys
+graft src/setup_ext
+prune src/setup_ext/__pycache__
