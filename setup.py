@@ -20,8 +20,8 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 # import from location
-setuptools_wrap = module_from_file("cmake", here / "setup_ext" / "setuptools_wrap.py")
-build_spdlog = module_from_file("cmake", here / "setup_ext" / "build_spdlog.py")
+setuptools_wrap = module_from_file("setuptools_wrap", here / "setup_ext" / "setuptools_wrap.py")
+build_spdlog = module_from_file("build_spdlog", here / "setup_ext" / "build_spdlog.py")
 SRC_DIR = here / "src" / "buildsys"
 BUILD_DIR = here / "workdir" / "build"
 INSTALL_DIR = here / "workdir" / "install"
