@@ -28,6 +28,11 @@ def cmake_dir():
     return os.path.join(lib64_dir(), "cmake")
 
 
+def pkg_root_dir():
+    here = os.path.dirname(os.path.normpath(__file__))
+    return here
+
+
 def setup_env():
     if sys.platform == "linux":
         lib64_path = lib64_dir()
@@ -46,5 +51,6 @@ __all__ = (
     "lib64_dir",
     "lib_dir",
     "cmake_dir",
+    "pkg_root_dir",
     "setup_env",
 )
