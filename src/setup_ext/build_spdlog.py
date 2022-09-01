@@ -5,6 +5,7 @@ import setuptools
 from setuptools.command.build_clib import build_clib
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
+import re
 
 
 def construct_cmdclass_build_clib(package_name, src_dir, build_dir, install_dir, linkback_hook=None):
@@ -126,4 +127,11 @@ def spdlog_linkback(build_dir, install_dir, package_dir):
     if os.path.exists(package_lib64_dir):
         shutil.rmtree(package_lib64_dir)
     shutil.copytree(spdlog_lib64_dir, package_lib64_dir, symlinks=True)
-    shutil.rmtree(os.path.join(package_lib64_dir, "pkgconfig"))
+    # instead of rmtree, replace prefix with "${pcfiledir}/../.."
+    pkgconfig_dir = os.path.join(package_lib64_dir, "pkgconfig")
+    pkgconfig_file = os.path.join(pkgconfig_dir, "spdlog.pc")
+    with open(pkgconfig_file, "r") as f:
+        pkgconfig_content = f.read()
+    pkgconfig_content = re.sub(r"^prefix=.*", r"prefix=${pcfiledir}/../..", pkgconfig_content)
+    with open(pkgconfig_file, "w") as f:
+        f.write(pkgconfig_content)
