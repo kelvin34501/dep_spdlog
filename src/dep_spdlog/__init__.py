@@ -33,13 +33,16 @@ def pkg_root_dir():
     return here
 
 
-def setup_env():
+def setup_env(env=None):
+    if env is None:
+        env = os.environ
+
     if sys.platform == "linux":
         lib64_path = lib64_dir()
-        if "LD_LIBRARY_PATH" not in os.environ:
-            os.environ["LD_LIBRARY_PATH"] = lib64_path
-        elif lib64_path not in os.environ["LD_LIBRARY_PATH"]:
-            os.environ["LD_LIBRARY_PATH"] = lib64_path + os.pathsep + os.environ["LD_LIBRARY_PATH"]
+        if "LD_LIBRARY_PATH" not in env:
+            env["LD_LIBRARY_PATH"] = lib64_path
+        elif lib64_path not in env["LD_LIBRARY_PATH"]:
+            env["LD_LIBRARY_PATH"] = lib64_path + os.pathsep + env["LD_LIBRARY_PATH"]
     else:
         raise NotImplementedError("unsupported platform")
 
