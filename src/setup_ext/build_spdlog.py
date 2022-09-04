@@ -45,7 +45,7 @@ def construct_cmdclass_build_clib(package_name, src_dir, build_dir, install_dir,
                 self.linkback_hook(self.cmake_build_dir, self.cmake_install_dir, package_dir)
             else:
                 build_py = self.get_finalized_command("build_py")
-                package_dir = os.path.abspath(build_py.get_package_dir(package_name))
+                package_dir = os.path.abspath(build_py.get_package_dir(self.package_name))
                 self.linkback_hook(self.cmake_build_dir, self.cmake_install_dir, package_dir)
 
             return res
