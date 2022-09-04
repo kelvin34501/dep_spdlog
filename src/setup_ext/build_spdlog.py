@@ -1,10 +1,13 @@
 import os
+import stat
 import shutil
+import sys
 import subprocess
 import setuptools
 from setuptools.command.build_clib import build_clib
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
+from distutils.errors import DistutilsSetupError
 import re
 
 
@@ -107,31 +110,51 @@ def cmake_install(build_dir):
     subprocess.check_call(["cmake", "--install", "."] + install_arg, cwd=build_dir)
 
 
+def _remove_readonly(func, path, _):
+    "Clear the readonly bit and reattempt the removal"
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 def spdlog_linkback(build_dir, install_dir, package_dir):
     # * spdlog specific
     # link the src, include, lib path
     spdlog_src_dir = os.path.join(build_dir, "spdlog-prefix", "src", "spdlog")
     spdlog_include_dir = os.path.join(install_dir, "include")
-    spdlog_lib64_dir = os.path.join(install_dir, "lib64")
+    lib_offset, spdlog_lib_dir = None, None
+    for _lib_offset in ["lib64", "lib"]:
+        _spdlog_lib_dir = os.path.join(install_dir, _lib_offset)
+        if os.path.exists(_spdlog_lib_dir):
+            lib_offset, spdlog_lib_dir = _lib_offset, _spdlog_lib_dir
+    if lib_offset is None:
+        raise DistutilsSetupError("cannot find spdlog lib install!")
     package_src_dir = os.path.join(package_dir, "src")
     package_include_dir = os.path.join(package_dir, "include")
-    package_lib64_dir = os.path.join(package_dir, "lib64")
+    package_lib_dir = os.path.join(package_dir, lib_offset)
     # symlink
     if os.path.exists(package_src_dir):
-        shutil.rmtree(package_src_dir)
+        shutil.rmtree(package_src_dir, onerror=_remove_readonly)
     shutil.copytree(spdlog_src_dir, package_src_dir)
-    shutil.rmtree(os.path.join(package_src_dir, ".git"))
+    shutil.rmtree(os.path.join(package_src_dir, ".git"), onerror=_remove_readonly)
     if os.path.exists(package_include_dir):
         shutil.rmtree(package_include_dir)
     shutil.copytree(spdlog_include_dir, package_include_dir)
-    if os.path.exists(package_lib64_dir):
-        shutil.rmtree(package_lib64_dir)
-    shutil.copytree(spdlog_lib64_dir, package_lib64_dir, symlinks=True)
+    if os.path.exists(package_lib_dir):
+        shutil.rmtree(package_lib_dir)
+    shutil.copytree(spdlog_lib_dir, package_lib_dir, symlinks=True)
     # instead of rmtree, replace prefix with "${pcfiledir}/../.."
-    pkgconfig_dir = os.path.join(package_lib64_dir, "pkgconfig")
+    pkgconfig_dir = os.path.join(package_lib_dir, "pkgconfig")
     pkgconfig_file = os.path.join(pkgconfig_dir, "spdlog.pc")
     with open(pkgconfig_file, "r") as f:
         pkgconfig_content = f.read()
     pkgconfig_content = re.sub(r"^prefix=.*", r"prefix=${pcfiledir}/../..", pkgconfig_content)
     with open(pkgconfig_file, "w") as f:
         f.write(pkgconfig_content)
+    
+    # windows specific: install bin dir
+    if sys.platform == "win32":
+        spdlog_bin_dir = os.path.join(install_dir, "bin")
+        package_bin_dir = os.path.join(package_dir, "bin")
+        if os.path.exists(package_bin_dir):
+            shutil.rmtree(package_bin_dir)
+        shutil.copytree(spdlog_bin_dir, package_bin_dir)
